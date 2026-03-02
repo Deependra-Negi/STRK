@@ -1,35 +1,53 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { useState } from "react";
+import { Tabs } from "expo-router";
+import { Text } from "react-native";
+import Onboarding from "../../src/screens/Onboarding";
+import useThemeState from "./useThemeState";
+import { HabitsProvider, useHabits } from "./habits-context";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const tabIcons = { index: '🏠', battles: '⚔️', friends: '👥', profile: '👤' };
+const tabTitles = { index: 'Home', battles: 'Battles', friends: 'Friends', profile: 'Profile' };
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+function TabsContent() {
+  const [isOnboarded, setIsOnboarded] = useState(false);
+  const { theme } = useThemeState();
+  const { setSelectedHabits } = useHabits();
+
+  if (!isOnboarded) {
+    return (
+      <Onboarding
+        theme={theme}
+        onComplete={(habits: { label: string; weeklyTarget: number }[]) => {
+          setSelectedHabits(habits);
+          setIsOnboarded(true);
+        }}
+      />
+    );
+  }
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+      screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+        tabBarIcon: ({ focused }) => (
+          <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
+            {tabIcons[route.name as keyof typeof tabIcons]}
+          </Text>
+        ),
+      })}
+    >
+      <Tabs.Screen name="index" options={{ title: tabTitles.index }} />
+      <Tabs.Screen name="battles" options={{ title: tabTitles.battles }} />
+      <Tabs.Screen name="friends" options={{ title: tabTitles.friends }} />
+      <Tabs.Screen name="profile" options={{ title: tabTitles.profile }} />
     </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <HabitsProvider>
+      <TabsContent />
+    </HabitsProvider>
   );
 }
